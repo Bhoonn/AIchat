@@ -38,7 +38,7 @@ public class DocumentController {
         documentService.saveDocument(document);
         langChainService.uploadDocument(file);
         model.addAttribute("message", "Document uploaded and saved.");
-        return "index";
+        return "redirect:/";
     }
 
     @GetMapping("/ask")
