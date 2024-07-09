@@ -1,25 +1,85 @@
-.drop-zone {
-    width: 100%;
-    height: 300px; /* Adjust height as needed */
-    border: 2px dashed #ccc;
+#Left {
     display: flex;
     justify-content: center;
     align-items: center;
-    text-align: center;
+    background-color: rgb(45, 45, 45);
+    width: auto;
+    height: calc(100vh - 20px);
+    left: 10px;
+    margin-left: 10px;
+    aspect-ratio: 4/5;
+    border-radius: 0.5rem;
+    min-height: 10rem;
+}
+
+.drop-zone {
+    position: relative;
+    width: 80%;
+    height: 10rem;
+    border: 2px dashed #ccc;
     cursor: pointer;
-    transition: border-color 0.3s ease; /* Smooth transition for border color change */
-  }
-  
-  .drop-zone p {
+    transition: border-color 0.3s ease;
+}
+
+.drop-zone-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 1rem;
+}
+
+.drop-zone img {
+    transition: 0.3s ease;
+    height: calc(32px + 3vh);
+}
+
+.drop-zone.dragging-over img {
+    transform: translateY(90%);
+}
+
+.drop-zone p {
     margin: 0;
-    font-size: 18px;
+    font-size: calc(8px + 3vh);
     color: #888;
-  }
-  
-  .drop-zone.active {
-    border-color: #007bff; /* Highlight border on active state */
-  }
-  
-  .drop-zone:hover {
-    opacity: 0.8; /* Reduce opacity on hover */
-  }
+    user-select: none;
+}
+.drop-zone.dragging-over p {
+    display: none;
+}
+
+.drop-zone p:last-child {
+    margin: 0;
+    font-size: calc(4px + 2vh);
+    color: #888;
+    margin-top: 10px;
+}
+
+.drop-zone.active {
+    border-color: #007bff;
+}
+
+.drop-zone:hover {
+    opacity: 0.7;
+}
+
+.browseBtn {
+    color: white;
+    text-decoration: underline;
+}
+
+.hidden-fill-input {
+    position: absolute;
+    top: 0;
+    background-color: transparent;
+    color: transparent;
+    height: 100%;
+    width: 100%;
+    cursor: pointer;
+}
+
+.hidden-fill-input::file-selector-button {
+    display: none;
+}
