@@ -15,7 +15,7 @@
 .drop-zone {
     position: relative;
     width: 80%;
-    height: 10rem;
+    height: 9.5rem;
     border: 2px dashed #ccc;
     cursor: pointer;
     transition: border-color 0.3s ease;
@@ -37,7 +37,7 @@
 }
 
 .drop-zone.dragging-over img {
-    transform: translateY(90%);
+    transform: translateY(calc(5rem - 50% - 1rem));
 }
 
 .drop-zone p {
