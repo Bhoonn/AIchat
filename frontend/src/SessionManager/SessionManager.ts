@@ -1,24 +1,25 @@
 import axios from "axios";
 
-let sessionId: string | null = null;
+axios.defaults.withCredentials = true
 
 const SessionManager = {
     startSession: async () => {
         try {
-            const response = await axios.post("http://localhost:5000/start_session");
-            sessionId = response.data.session_id;
-            return sessionId;
+            axios.post("http://localhost:5000/start_session");
+            return true;
         } catch (error) {
             console.error("Error starting session:", error);
             throw error;
         }
     },
 
-    getSessionData: async () => {
+    checkSession: async () => {
         try {
-            const response = await axios.get("http://localhost:5000/get_session");
-            sessionId = response.data.session_id;
-            return sessionId;
+            const response = await axios.get("http://localhost:5000/check_session");
+            if (response.data.message === "Invalid token") {
+                return false;
+            }
+            return true;
         } catch (error) {
             console.error("Error getting session:", error);
             throw error;
@@ -26,24 +27,20 @@ const SessionManager = {
     },
 
     uploadFile: async (file : File) => {
-        if (!sessionId) {
-            alert("Session expired!")
-            return
-        }
-console.log(sessionId)
         try {
-            const response = await axios.post("http://localhost:5000/upload", file, {
+            const formData = new FormData();
+            formData.append("file", file);        
+            const response = await axios.post("http://localhost:5000/upload", formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    'Authorization': `Bearer ${sessionId}`
-                }
+                },
             });
     
-            console.log('File uploaded successfully:', response.data);
+            console.log("File uploaded successfully:", response.data);
             alert(`File "${file.name}" uploaded successfully!`);
         } catch (error) {
-            console.error('Upload error:', error);
-            alert('Upload failed. Please try again.');
+            console.error("Upload error:", error);
+            alert("Upload failed. Please try again.");
         }
     }
 }
@@ -51,10 +48,9 @@ console.log(sessionId)
 // Initialize the session //
 const initializeSession = async () => {
     try {
-        const storedSessionId = await SessionManager.getSessionData();
-        if (!storedSessionId) {
-            const newSessionId = await SessionManager.startSession();
-            console.log(newSessionId)
+        const good = await SessionManager.checkSession();
+        if (!good) {
+            SessionManager.startSession();
         }
     } catch (error) {
         console.error("Error initializing session:", error);

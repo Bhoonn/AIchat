@@ -1,61 +1,94 @@
-from flask import Flask, request, jsonify, session
+from flask import Flask, request, jsonify, session, make_response
 from flask_cors import CORS
 from datetime import timedelta
+from werkzeug.utils import secure_filename
 import os
 import uuid
-
-app = Flask(__name__)
-app.secret_key = "NullObjects_Secret_Key_Demek"
-CORS(app, resources={r"/*": {"origins": "http://localhost:3000"}})
+import shutil
+import jwt
+import datetime
 
 UPLOAD_FOLDER = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, "uploads")
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 
+JWT_SECRET_KEY = "NullObjects_Secret_Key_Demek"
+JWT_EXPIRATION_DELTA = timedelta(minutes=180)
+
+ALLOWED_EXTENSIONS = (".txt", ".doc", ".docx", ".pdf")
+
+app = Flask(__name__)
+app.secret_key = JWT_SECRET_KEY
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60*3)
+app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
+app.config["JWT_EXPIRATION_DELTA"] = JWT_EXPIRATION_DELTA
+CORS(app, origins="http://localhost:3000", supports_credentials=True)
+
+shutil.rmtree(UPLOAD_FOLDER)
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
-ALLOWED_EXTENSIONS = {".txt", ".doc", ".docx", ".pdf"}
+def GenerateJWTtoken(session_id):
+    payload = {
+        'session_id': session_id,
+        'exp': datetime.datetime.now(datetime.UTC) + JWT_EXPIRATION_DELTA
+    }
+    return jwt.encode(payload, JWT_SECRET_KEY, algorithm='HS256')
+
+def VerifyJWTtoken(token):
+    if not token:
+        return None
+
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=['HS256'])
+        return payload['session_id']
+    except jwt.ExpiredSignatureError:
+        return None
+    except jwt.InvalidTokenError:
+        return None
 
 @app.route("/start_session", methods=["POST"])
 def start_session():
-    print("hello")
     session["session_id"] = str(uuid.uuid4())
-    print(session.get("session_id"))
-    return jsonify({"message": "Session Started", "session_id": session["session_id"]}), 200
+    token = GenerateJWTtoken(session["session_id"])
+    session.modified = True
+    response = make_response(jsonify({"message": "Session Started"}))
+    response.set_cookie('jwt_token', token, httponly=True, secure=True)
+    return response, 200
 
-@app.route("/get_session", methods=["GET"])
-def get_session():
-    session_id = session.get("session_id")
-    print("Get session")
-    print(session_id)
-    if session_id:
-        return jsonify({"message": "Session Data", "session_id": session_id}), 200
-    else:
-        return jsonify({"message": "No Session Found"}), 200
+@app.route("/check_session", methods=["GET"])
+def check_session():
+    token = request.cookies.get('jwt_token')
+
+    if not VerifyJWTtoken(token):
+        return jsonify({"message": "Invalid token"}), 200
+
+    return jsonify({"message": "Token is valid"}), 200
 
 @app.route("/upload", methods=["POST"])
 def upload():
-    session_id = session.get("session_id")
-    print("whar")
-    print(session_id)
-    print("yrea")
-    if session_id:
-        if "file" not in request.files:
-            return jsonify({"error": "No file part in the request"}), 400
+    token = request.cookies.get('jwt_token')
 
-        file = request.files["file"]
-        print(file)
-        if file.filename == "":
-            return jsonify({"error": "No selected file"}), 400
-        
-        if not file.filename.endswith(ALLOWED_EXTENSIONS):
-            print("debugovic")
-            return jsonify({"error": "Bad File Extension"}), 400
-        print("debugovic2")
-    else:
-        return jsonify({"message": "No Session Found"}), 404
+    if not VerifyJWTtoken(token):
+        return jsonify({"error": "Invalid token"}), 401
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file part in the request"}), 400
+
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    if not file.filename.lower().endswith(ALLOWED_EXTENSIONS):
+        return jsonify({"error": "Bad File Extension"}), 400
+
+    try:
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        return jsonify({"message": "File uploaded successfully", "filename": filename}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)

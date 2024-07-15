@@ -2,7 +2,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: rgb(45, 45, 45);
+    background-color: rgb(34, 37, 38);
     width: auto;
     height: calc(100vh - 20px);
     left: 10px;
@@ -16,9 +16,10 @@
     position: relative;
     width: 80%;
     height: 9.5rem;
-    border: 2px dashed #ccc;
+    border: 2px dashed rgb(100,100,100);
     cursor: pointer;
     transition: border-color 0.3s ease;
+    padding: 1rem;
 }
 
 .drop-zone-container {
@@ -28,7 +29,6 @@
     justify-content: center;
     align-items: center;
     text-align: center;
-    padding: 1rem;
 }
 
 .drop-zone img {
@@ -37,7 +37,8 @@
 }
 
 .drop-zone.dragging-over img {
-    transform: translateY(calc(5rem - 50% - 1rem));
+    transform: translateY(calc(5rem - 50% ));
+    opacity: 0.5;
 }
 
 .drop-zone p {
@@ -73,6 +74,7 @@
 .hidden-fill-input {
     position: absolute;
     top: 0;
+    left: 0;
     background-color: transparent;
     color: transparent;
     height: 100%;
