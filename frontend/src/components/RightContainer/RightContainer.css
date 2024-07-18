@@ -1,0 +1,102 @@
+#Right {
+    display: flex;
+    background-color: rgb(34, 37, 38);
+    flex: 1 1 auto;
+    margin-right: 10px;
+    height: calc(100vh - 20px);
+    border-radius: 0.5rem;
+    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+}
+
+#chatbox_container {
+    display: flex;
+    width: 100%;
+    height: calc(100% - 2rem);
+    overflow-y: scroll;
+    overflow-x: hidden;
+    justify-content: center;
+}
+
+#chatbox {
+    display: flex;
+    width: 100%;
+    max-width: 44rem;
+    background-color: black;
+    margin-left: 16px;
+}
+#input_container {
+    display: flex;
+    position: relative;
+    width: calc(100% - 2rem);
+    max-width: 50rem;
+    padding: 4px;
+    background-color: rgb(45,45,45);
+    position: relative;
+    border-radius: 2rem;
+    justify-content: center;
+    align-items: flex-end;
+    margin-bottom: 1rem;
+}
+
+#input_container > input {
+    height: 2.75rem;
+    top: 100%;
+}
+
+#input_container > input:first-child {
+    opacity: 0.5;
+}
+
+#input_container > input:first-child:hover {
+    opacity: 0.8;
+}
+
+#input_container > input:last-child {
+    opacity: 0.2;
+}
+
+#input_inner {
+    width: 100%;
+    max-width: 46rem;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border: none;
+    resize: none;
+    font-size: 16px;
+    outline: none;
+    max-height: 200px;
+    font-family: 'Open Sans', Arial, sans-serif;
+    line-height: 1.5;
+    box-sizing: border-box;
+    height: 44px;
+    background-color: transparent;
+    color: white;
+}
+
+#input_inner::placeholder {
+    color: #888;
+}
+
+/* ===== Scrollbar CSS ===== */
+  /* Firefox */
+  * {
+    scrollbar-width: auto;
+    scrollbar-color: #999999 #3c3c3c;
+  }
+
+  /* Chrome, Edge, and Safari */
+  *::-webkit-scrollbar {
+    width: 16px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: #3c3c3c;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: #646464;
+    border-radius: 10px;
+    border: 3px solid #ffffff;
+  }

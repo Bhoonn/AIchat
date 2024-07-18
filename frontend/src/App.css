@@ -13,14 +13,6 @@
   gap: 10px;
 }
 
-#Right {
-  background-color: rgb(34, 37, 38);
-  flex: 1 1 auto;
-  margin-right: 10px;
-  height: calc(100vh - 20px);
-  border-radius: 0.5rem;
-}
-
 .box.has-advanced-upload {
   background-color: white;
   outline: 2px dashed black;

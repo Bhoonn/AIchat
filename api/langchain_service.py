@@ -7,6 +7,9 @@ import uuid
 import shutil
 import jwt
 import datetime
+from chatbot import Chatbot
+
+chatbot = Chatbot("deepset/tinyroberta-squad2")
 
 UPLOAD_FOLDER = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, "uploads")
@@ -83,39 +86,28 @@ def upload():
         return jsonify({"error": "Bad File Extension"}), 400
 
     try:
-        filename = secure_filename(file.filename)
+        filename = secure_filename(session["session_id"])
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         return jsonify({"message": "File uploaded successfully", "filename": filename}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/ask_question", methods=["POST"])
+def ask_question():
+    token = request.cookies.get("jwt_token")
+    
+    if not VerifyJWTtoken(token):
+        return jsonify({"error": "Invalid token"}), 401
+    
+    question = request.data.decode('utf-8')
+    
+    if isinstance(question, str):
+        with open(os.path.join(UPLOAD_FOLDER, session["filename"])) as file:
+            try:
+                return jsonify({"message": chatbot.GenerateAnswer(question, file)}), 200
+            except any:
+                return jsonify({"error": "Couldn't generate answer!"}), 500
+
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
-
-#qa_pipeline = pipeline("question-answering", model="distilbert-base-uncased-distilled-squad")
-
-#document_text = ""
-
-#@app.route("/upload", methods=["POST"])
-#def upload_document():
-#    global document_text
-#    file = request.files["file"]
-#    document_text = file.read().decode("utf-8")
-#    return "Document uploaded and text extracted.", 200
-
-
-#@app.route("/ask", methods=["GET"])
-#def ask_question():
-#    global document_text
-#    question = request.args.get("question")
-#    if not document_text:
-#        return "No document uploaded.", 400
-
-    # Use the pipeline to get the answer
-#    result = qa_pipeline(question=question, context=document_text)
-#    return jsonify(result), 200
-
-
-#if __name__ == "__main__":
-#    app.run(host="127.0.0.1", port=5000)
