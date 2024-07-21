@@ -3,9 +3,11 @@ import axios from "axios";
 axios.defaults.withCredentials = true
 
 const SessionManager = {
-    startSession: async () => {
+    url: "http://localhost:5000",
+
+    startSession: async function() {
         try {
-            axios.post("http://localhost:5000/start_session");
+            axios.post(this.url + "/start_session");
             return true;
         } catch (error) {
             console.error("Error starting session:", error);
@@ -13,9 +15,9 @@ const SessionManager = {
         }
     },
 
-    checkSession: async () => {
+    checkSession: async function() {
         try {
-            const response = await axios.get("http://localhost:5000/check_session");
+            const response = await axios.get(this.url + "/check_session");
             if (response.data.message === "Invalid token") {
                 return false;
             }
@@ -26,21 +28,46 @@ const SessionManager = {
         }
     },
 
-    uploadFile: async (file : File) => {
+    // We will read the content of the file client-side in order to save server performance //
+    // Send the content of the file directly as a string //
+    uploadFile: async function(content: String) {
         try {
-            const formData = new FormData();
-            formData.append("file", file);        
-            const response = await axios.post("http://localhost:5000/upload", formData, {
+            //const formData = new FormData();
+            //formData.append("file", file);        
+            //const response = await axios.post(this.url + "/upload", formData, {
+            //    headers: {
+            //        'Content-Type': 'multipart/form-data',
+            //    },
+            //});
+            
+            const response = await axios.post(this.url + "/upload", content, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
+                    'Content-Type': 'text/plain',
                 },
             });
-    
+            
             console.log("File uploaded successfully:", response.data);
-            alert(`File "${file.name}" uploaded successfully!`);
+            //alert(`File "${file.name}" uploaded successfully!`);
+            return true;
         } catch (error) {
             console.error("Upload error:", error);
             alert("Upload failed. Please try again.");
+        }
+
+        return false
+    },
+
+    askQuestion: async function(message : String) {
+        try {
+            const response = await axios.post(this.url + "/ask_question", message, {
+                headers: {
+                    'Content-Type': 'text/plain',
+                },
+            });
+            return response.data.message
+        } catch (error) {
+            console.error("Unexpected error:", error);
+            alert("Your question couldn't be submitted due to an unexpected error.");
         }
     }
 }

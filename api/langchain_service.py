@@ -9,7 +9,7 @@ import jwt
 import datetime
 from chatbot import Chatbot
 
-chatbot = Chatbot("deepset/tinyroberta-squad2")
+chatbot = Chatbot("bert-large-uncased-whole-word-masking-finetuned-squad")
 
 UPLOAD_FOLDER = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, "uploads")
@@ -17,7 +17,7 @@ UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, "uploads")
 JWT_SECRET_KEY = "NullObjects_Secret_Key_Demek"
 JWT_EXPIRATION_DELTA = timedelta(minutes=180)
 
-ALLOWED_EXTENSIONS = (".txt", ".doc", ".docx", ".pdf")
+ALLOWED_EXTENSIONS = (".txt", ".docx", ".pdf")
 
 app = Flask(__name__)
 app.secret_key = JWT_SECRET_KEY
@@ -74,21 +74,31 @@ def upload():
 
     if not VerifyJWTtoken(token):
         return jsonify({"error": "Invalid token"}), 401
+    
+    content = request.data.decode('utf-8')
 
-    if "file" not in request.files:
-        return jsonify({"error": "No file part in the request"}), 400
+    if not content:
+        return jsonify({"error": "Content is empty"}), 400
+    
+    # Take only the first 512 characters of the string because the model is limited to only that much #
+    content = content[:512]
 
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "No selected file"}), 400
+#    if "file" not in request.files:
+#        return jsonify({"error": "No file part in the request"}), 400
 
-    if not file.filename.lower().endswith(ALLOWED_EXTENSIONS):
-        return jsonify({"error": "Bad File Extension"}), 400
+#    file = request.files["file"]
+#    if file.filename == "":
+#        return jsonify({"error": "No selected file"}), 400
+#
+#    if not file.filename.lower().endswith(ALLOWED_EXTENSIONS):
+#        return jsonify({"error": "Bad File Extension"}), 400
 
     try:
         filename = secure_filename(session["session_id"])
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        with open(filepath, "w") as file:
+            file.write(content)
+        session["filename"] = filename
         return jsonify({"message": "File uploaded successfully", "filename": filename}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -100,14 +110,21 @@ def ask_question():
     if not VerifyJWTtoken(token):
         return jsonify({"error": "Invalid token"}), 401
     
-    question = request.data.decode('utf-8')
-    
-    if isinstance(question, str):
-        with open(os.path.join(UPLOAD_FOLDER, session["filename"])) as file:
-            try:
-                return jsonify({"message": chatbot.GenerateAnswer(question, file)}), 200
-            except any:
-                return jsonify({"error": "Couldn't generate answer!"}), 500
+    try:
+        question = request.data.decode('utf-8')
+
+        if isinstance(question, str):
+            with open(os.path.join(UPLOAD_FOLDER, session.get("filename", ''))) as file:
+                try:
+                    return jsonify({"message": chatbot.GenerateAnswer(question, file.read())}), 200
+                except Exception as e:
+                    return jsonify({"error": str(e)}), 500
+        else:
+            return jsonify({"error": "Invalid data format"}), 400
+
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")
+        return jsonify({"error": "Unexpected error occurred"}), 500
 
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000)
